@@ -5,7 +5,7 @@ from flask import Flask
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 
-TOKEN = "8359171444:AAEXpu0AWsJ-Jc0IwpRN38HjMB7ut9eYVzU"
+TOKEN = "8359171444:AAHSrMJYaw3IBrQjXU1tCZ2nMzarBGVrzH4"
 bot = telebot.TeleBot(TOKEN)
 
 app = Flask(__name__)
@@ -36,18 +36,20 @@ def send_welcome(message):
 def send_contact(message):
     bot.reply_to(message, "📩 *Brainful Hub Support*\n\nReach out to us directly: @Brainful_support", parse_mode="Markdown")
 
-def start_polling():
-    # Wait briefly on startup to allow any stale Telegram sessions to disconnect
-    time.sleep(3)
+def run_bot():
+    try:
+        bot.remove_webhook()
+    except Exception:
+        pass
+        
     while True:
         try:
-            bot.remove_webhook()
             bot.polling(none_stop=True, interval=1, timeout=20)
         except Exception as e:
-            print(f"Session conflict or network drop: {e}. Retrying in 7 seconds...")
-            time.sleep(7)
+            print(f"Polling error: {e}. Retrying in 5 seconds...")
+            time.sleep(5)
 
 if __name__ == '__main__':
-    threading.Thread(target=start_polling, daemon=True).start()
+    threading.Thread(target=run_bot, daemon=True).start()
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
