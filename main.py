@@ -8,12 +8,11 @@ from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 TOKEN = "8359171444:AAEXpu0AWsJ-Jc0IwpRN38HjMB7ut9eYVzU"
 bot = telebot.TeleBot(TOKEN)
 
-# Flask server for Render health check
 app = Flask(__name__)
 
 @app.route('/')
 def health_check():
-    return "Brainful Hub Bot is running!", 200
+    return "Brainful Hub Bot is running 24/7!", 200
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
@@ -37,14 +36,18 @@ def send_welcome(message):
 def send_contact(message):
     bot.reply_to(message, "📩 *Brainful Hub Support*\n\nReach out to us directly: @Brainful_support", parse_mode="Markdown")
 
-def run_bot():
-    bot.remove_webhook()
-    bot.infinity_polling(timeout=20, long_polling_timeout=10)
+def start_polling():
+    # Wait briefly on startup to allow any stale Telegram sessions to disconnect
+    time.sleep(3)
+    while True:
+        try:
+            bot.remove_webhook()
+            bot.polling(none_stop=True, interval=1, timeout=20)
+        except Exception as e:
+            print(f"Session conflict or network drop: {e}. Retrying in 7 seconds...")
+            time.sleep(7)
 
 if __name__ == '__main__':
-    # Start bot polling in a separate background thread
-    threading.Thread(target=run_bot, daemon=True).start()
-    
-    # Start Flask on port specified by Render (defaults to 10000)
+    threading.Thread(target=start_polling, daemon=True).start()
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
